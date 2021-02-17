@@ -4,9 +4,11 @@ Some tasks come up again and again in image processing and even just for display
 
 ## Generating a montage from a single plane multi channel image
 * multi_channel_montage.ijm
+
 Input: 
 * Active image stack containing multiple channels but only one focal plane. 
 * If any channels in the original image should be disregarded, please create a substack with only the channels of interest as the input. 
+
 Output: 
 * Montage containing:
   - All individual channels of the input image with a grey LUT 
