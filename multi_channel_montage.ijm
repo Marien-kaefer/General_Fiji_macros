@@ -22,6 +22,7 @@ scale_bar_width = 10;
 scale_bar_height = 5;
 scale_font_size = 12;
 final_image_type_choice = newArray("8-bit color", "RGB");
+include_merge_choice = newArray("Yes", "No");
 
 //request information from the user, displaying default processing parameters as set above
 scale_bar_option = newArray("Yes", "No");
@@ -36,9 +37,11 @@ Dialog.addNumber("Scale bar height (pixels):", scale_bar_height);
 Dialog.addNumber("Scale font size:", scale_font_size);
 Dialog.addChoice("Scale bar colour:", scale_bar_colour_choice);
 Dialog.addChoice("Scale bar position:", scale_bar_position_choice);
+Dialog.addMessage("Montage dimensions");
 Dialog.addNumber("Montage columns:", Montage_columns);
 Dialog.addNumber("Montage rows:", Montage_rows);
 Dialog.addRadioButtonGroup("Final image type: ", final_image_type_choice, 1, 2, final_image_type_choice[0]);
+Dialog.addRadioButtonGroup("Include merged channel image? ", include_merge_choice, 1, 2, include_merge_choice[0]);
 Dialog.show();
 //title = Dialog.getString();
 resized_image_width = Dialog.getNumber();
@@ -51,6 +54,7 @@ scale_bar_position = Dialog.getChoice();
 Montage_columns = Dialog.getNumber();
 Montage_rows = Dialog.getNumber();
 final_image_type = Dialog.getRadioButton();
+include_merge_choice = Dialog.getRadioButton();
 
 run("Duplicate...", "duplicate");
 
@@ -70,22 +74,28 @@ for (i=0; i<channels; i++){
 	run("Grays");
 }
 selectWindow(scaled_title);
+if (scale_bar_option == "Yes"){
+	run("Scale Bar...", "width=scale_bar_width height=scale_bar_height font=scale_font_size color="+scale_bar_colour+" background=None location=["+scale_bar_position+"] bold label");
+}
+run("RGB Color");
 run("Stack to Images");
 
-// generate composite image with pseudocolours
-selectWindow(duplicate_Title);
-for (i=0; i < (channels); i++){
+if (include_merge_choice == "Yes"){
+	// generate composite image with pseudocolours
 	selectWindow(duplicate_Title);
-	setSlice(i+1);
-	//print("Channel " + (i+1));
-	run("Enhance Contrast", "saturated=0.35");
+	for (i=0; i < (channels); i++){
+		selectWindow(duplicate_Title);
+		setSlice(i+1);
+		//print("Channel " + (i+1));
+		run("Enhance Contrast", "saturated=0.35");
+	}
+	run("Make Composite");
+	//add scale bar to composite image
+	if (scale_bar_option == "Yes"){
+		run("Scale Bar...", "width=scale_bar_width height=scale_bar_height font=scale_font_size color="+scale_bar_colour+" background=None location=["+scale_bar_position+"] bold overlay");
+	}
+	run("Flatten");
 }
-run("Make Composite");
-//add scale bar to composite image
-if (scale_bar_option == "Yes"){
-	run("Scale Bar...", "width=scale_bar_width height=scale_bar_height font=scale_font_size color="+scale_bar_colour+" background=None location=["+scale_bar_position+"] bold overlay");
-}
-run("Flatten");
 
 // gather single channel and composite merge image in single stack to generate montage
 run("Images to Stack", "name=Stack title=[] use");
@@ -93,5 +103,10 @@ run("Images to Stack", "name=Stack title=[] use");
 run("Make Montage...", "columns=Montage_columns rows=Montage_rows scale=1 border=3");
 // convert to 8-bit colour image to reduce file size
 if (final_image_type == "8-bit color"){
-	run("8-bit Color", "number=256");
+	if (bitDepth() == "RGB"){
+		run("8-bit Color", "number=256");
+	}
+	else if (bitDepth() == "16-bit"){
+		run("8-bit");
+	}
 }
