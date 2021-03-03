@@ -24,11 +24,13 @@ scale_font_size = 12;
 final_image_type_choice = newArray("8-bit color", "RGB");
 
 //request information from the user, displaying default processing parameters as set above
+scale_bar_option = newArray("Yes", "No");
 scale_bar_colour_choice = newArray("White", "Black", "Light Gray", "Gray", "DarkGray", "Red", "Green", "Blue", "Yellow"); 
 scale_bar_position_choice = newArray("Upper Right", "Lower Right", "Lower Left", "Upper Left");
 Dialog.create("Please choose processing parameters");
 Dialog.addMessage("The image currently being processed is " + title + "\n" + "Please choose the following parameters.");
-Dialog.addNumber("Resize image with to (pixels):", resized_image_width);
+Dialog.addNumber("Resize image width to (pixels):", resized_image_width);
+Dialog.addRadioButtonGroup("Add scale bar? ", scale_bar_option, 1, 2, scale_bar_option[0]);
 Dialog.addNumber("Scale bar width (microns):", scale_bar_width);
 Dialog.addNumber("Scale bar height (pixels):", scale_bar_height);
 Dialog.addNumber("Scale font size:", scale_font_size);
@@ -36,10 +38,11 @@ Dialog.addChoice("Scale bar colour:", scale_bar_colour_choice);
 Dialog.addChoice("Scale bar position:", scale_bar_position_choice);
 Dialog.addNumber("Montage columns:", Montage_columns);
 Dialog.addNumber("Montage rows:", Montage_rows);
-Dialog.addRadioButtonGroup("Final image type: 2", final_image_type_choice, 1, 2, final_image_type_choice[0]);
+Dialog.addRadioButtonGroup("Final image type: ", final_image_type_choice, 1, 2, final_image_type_choice[0]);
 Dialog.show();
 //title = Dialog.getString();
 resized_image_width = Dialog.getNumber();
+scale_bar_option = Dialog.getRadioButton();
 scale_bar_width = Dialog.getNumber();
 scale_bar_height = Dialog.getNumber();
 scale_font_size = Dialog.getNumber();
@@ -48,6 +51,8 @@ scale_bar_position = Dialog.getChoice();
 Montage_columns = Dialog.getNumber();
 Montage_rows = Dialog.getNumber();
 final_image_type = Dialog.getRadioButton();
+
+run("Duplicate...", "duplicate");
 
 // resize image
 run("Size...", "width=resized_image_width depth=channels constrain average interpolation=Bicubic")
@@ -77,7 +82,9 @@ for (i=0; i < (channels); i++){
 }
 run("Make Composite");
 //add scale bar to composite image
-run("Scale Bar...", "width=scale_bar_width height=scale_bar_height font=scale_font_size color="+scale_bar_colour+" background=None location=["+scale_bar_position+"] bold overlay");
+if (scale_bar_option == "Yes"){
+	run("Scale Bar...", "width=scale_bar_width height=scale_bar_height font=scale_font_size color="+scale_bar_colour+" background=None location=["+scale_bar_position+"] bold overlay");
+}
 run("Flatten");
 
 // gather single channel and composite merge image in single stack to generate montage
@@ -85,4 +92,6 @@ run("Images to Stack", "name=Stack title=[] use");
 // make montage
 run("Make Montage...", "columns=Montage_columns rows=Montage_rows scale=1 border=3");
 // convert to 8-bit colour image to reduce file size
-run("8-bit Color", "number=256");
+if (final_image_type == "8-bit color"){
+	run("8-bit Color", "number=256");
+}
