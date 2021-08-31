@@ -15,3 +15,15 @@ Output:
   - Composite image merged from the individual channels with the LUTs set in the input image before running the macro. 
 
 The macro offers a selection of parameters for downscaling of the images, scale bar options, montage options, and further downscaling of the montage file type for integration of the montage in presentations and/or documents without unecessarily inflating the final document file size.
+
+## Splitting a multichannel image into individual .tif files
+* channelSplitter.ijm
+
+Input: 
+* folder containing image files  
+
+Output: 
+* one tif file per channel for each image
+  - This macro runs independent of the number of channels in the original image. The file names are prefaced with C1, C2, ... Cn as it is implemented in Fiji
+
+The macro requests the user to specify an input and an output folder. The files are filtered for a specific file format (default: .lsm). All the files in the input folder with the specified suffix will be processed. 
