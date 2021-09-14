@@ -27,3 +27,15 @@ Output:
   - This macro runs independent of the number of channels in the original image. The file names are prefaced with C1, C2, ... Cn as it is implemented in Fiji
 
 The macro requests the user to specify an input and an output folder. The files are filtered for a specific file format (default: .lsm). All the files in the input folder with the specified suffix will be processed. 
+
+## Generate maximum intensity projections of multiple files automatically
+* MakeAndSaveMIP.ijm
+
+Input: 
+* folder containing image files  
+
+Output: 
+* one tif file per  image
+  - The file names are prefaced with MAX- as it is implemented in Fiji
+
+The macro requests the user to specify an input and an output folder. The files are filtered for a specific file format (default: .czi). All the files in the input folder with the specified suffix will be processed. 
