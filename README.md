@@ -39,3 +39,15 @@ Output:
   - The file names are prefaced with MAX- as it is implemented in Fiji
 
 The macro requests the user to specify an input and an output folder. The files are filtered for a specific file format (default: .czi). All the files in the input folder with the specified suffix will be processed. 
+
+## Convert stack to individual z slices
+* Stack_To_Slices.ijm
+
+required: 
+* open z-stack, can be multidimensional  
+
+Output: 
+* one tif file per z slice
+  - The file names are suffixed with "_Z{sliceNumber}
+
+The macro requests the user to specify an output folder. 
