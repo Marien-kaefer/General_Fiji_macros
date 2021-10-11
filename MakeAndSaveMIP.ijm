@@ -18,6 +18,7 @@
 setBatchMode(true);	// run routine without showing image windows, i.e. quicker
 
 processFolder(input);
+print("All done!");
 
 // function to scan folders/subfolders/files to find files with correct suffix
 function processFolder(input) {
@@ -36,6 +37,7 @@ function splitChannels(file){
 	open(input + File.separator + file);
 	run("Z Project...", "projection=[Max Intensity]");
 	saveFiles();	// save channel for as many times as there were slices in the original stack
+	close("*");
 	}
 
 // save files in specified output folder and close saved files
