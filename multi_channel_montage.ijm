@@ -23,6 +23,7 @@ scale_bar_height = 5;
 scale_font_size = 12;
 final_image_type_choice = newArray("8-bit color", "RGB");
 include_merge_choice = newArray("Yes", "No");
+auto_brightness_and_contrast_choice = newArray("Yes", "No"); 
 
 //request information from the user, displaying default processing parameters as set above
 scale_bar_option = newArray("Yes", "No");
@@ -31,6 +32,7 @@ scale_bar_position_choice = newArray("Upper Right", "Lower Right", "Lower Left",
 Dialog.create("Please choose processing parameters");
 Dialog.addMessage("The image currently being processed is " + title + "\n" + "Please choose the following parameters.");
 Dialog.addNumber("Resize image width to (pixels):", resized_image_width);
+Dialog.addRadioButtonGroup("Auto set Brightness or contrast? If no, the currently set display settings will be used.", auto_brightness_and_contrast_choice, 1, 2, auto_brightness_and_contrast_choice[0]);
 Dialog.addRadioButtonGroup("Add scale bar? ", scale_bar_option, 1, 2, scale_bar_option[0]);
 Dialog.addNumber("Scale bar width (microns):", scale_bar_width);
 Dialog.addNumber("Scale bar height (pixels):", scale_bar_height);
@@ -45,6 +47,7 @@ Dialog.addRadioButtonGroup("Include merged channel image? ", include_merge_choic
 Dialog.show();
 //title = Dialog.getString();
 resized_image_width = Dialog.getNumber();
+auto_brightness_and_contrast_choice = Dialog.getRadioButton();
 scale_bar_option = Dialog.getRadioButton();
 scale_bar_width = Dialog.getNumber();
 scale_bar_height = Dialog.getNumber();
@@ -55,6 +58,7 @@ Montage_columns = Dialog.getNumber();
 Montage_rows = Dialog.getNumber();
 final_image_type = Dialog.getRadioButton();
 include_merge_choice = Dialog.getRadioButton();
+
 
 run("Duplicate...", "duplicate");
 
@@ -70,7 +74,9 @@ for (i=0; i<channels; i++){
 	selectWindow(scaled_title);
 	//print("channel processed: " + (i+1)); 
 	setSlice(i+1);
-	run("Enhance Contrast", "saturated=0.35");
+	if(auto_brightness_and_contrast_choice == "Yes"){
+		run("Enhance Contrast", "saturated=0.35");
+	}
 	run("Grays");
 }
 selectWindow(scaled_title);
@@ -87,7 +93,9 @@ if (include_merge_choice == "Yes"){
 		selectWindow(duplicate_Title);
 		setSlice(i+1);
 		//print("Channel " + (i+1));
-		run("Enhance Contrast", "saturated=0.35");
+		if(auto_brightness_and_contrast_choice == "Yes"){
+			run("Enhance Contrast", "saturated=0.35");
+		}
 	}
 	run("Make Composite");
 	//add scale bar to composite image
