@@ -12,15 +12,17 @@
 //get input and output directories from user
 #@ File (label = "Input directory", style = "directory") input
 #@ File (label = "Output directory", style = "directory") output
-#@ String (label = "File suffix", value = ".lsm", persist=false) suffix
-#@ String(label = "Adjust Brightness/Contrast?", choices = {"yes", "no"}, style = "radioButtonHorizontal", persist=false)  adjust_brightness_contrast
-#@ String(label = "Convert to 8 bit?", choices = {"yes", "no"}, style = "radioButtonHorizontal", persist=false)  convert_to_8bit
+#@ String (label = "File suffix", value = "", persist=false) suffix
+#@ String(label = "Adjust Brightness/Contrast?", choices = {"no", "yes"}, style = "radioButtonHorizontal", persist=false)  adjust_brightness_contrast
+#@ String(label = "Convert to 8 bit?", choices = {"no", "yes"}, style = "radioButtonHorizontal", persist=false)  convert_to_8bit
 
 
 
 setBatchMode(true);	// run routine without showing image windows, i.e. quicker
 
 processFolder(input);
+print("Done!"); 
+beep();
 
 // function to scan folders/subfolders/files to find files with correct suffix
 function processFolder(input) {
@@ -37,29 +39,36 @@ function processFolder(input) {
 // split channels for an opened function 
 function splitChannels(file){
 	open(input + File.separator + file);
-	numberOfChannels = nSlices();  // query number of slices in stack
-	if (numberOfChannels == nSlices){
-	run("Split Channels");
-	saveChannels(numberOfChannels);	// save channel for as many times as there were slices in the original stack
-	}
+	print("Processing: " + file); 
+	getDimensions(width, height, channels, slices, frames);
+	numberOfChannels = channels;  // query number of slices in stack
+	if (numberOfChannels == 1){
+		print("This file contains only one channel.");
+		}	
+	else if (numberOfChannels > 1){
+		run("Split Channels");
+		saveChannels(numberOfChannels);	// save channel for as many times as there were slices in the original stack	
+		}
+	numberOfChannels = 0; 
 	}
 
 // save files in specified output folder and close saved files
 function saveChannels(numberOfChannels){
 	for (i = 0; i < numberOfChannels; i++){
 		fileName = getTitle();
-		if (adjust_brightness_contrast == yes){
+		if (adjust_brightness_contrast == "yes"){
 			run("Z Project...", "projection=[Max Intensity]");
 			MIP_image = getTitle(); 
 			getMinAndMax(min, max);
 			selectWindow(MIP_image); 
-			Close();
+			close();
 			setMinAndMax(min, max);				
 		}
-		if (convert_to_8bit == yes){
+		if (convert_to_8bit == "yes"){
    			run("8-bit");
 		}
 		saveAs("Tiff",output + File.separator + fileName);
+		print("Saving file: " + fileName);
 		close();
 	}
 }
