@@ -13,7 +13,10 @@
 #@ File (label = "Input directory", style = "directory") input
 #@ File (label = "Output directory", style = "directory") output
 #@ String (label = "File suffix", value = "", persist=false) suffix
+<<<<<<< HEAD
 #@ String (visibility=MESSAGE, value="NOTE: Enabling the below options has an impact on the intensity histogram and therefore downstream measurements!", required=false) msg
+=======
+>>>>>>> origin/main
 #@ String(label = "Adjust Brightness/Contrast?", choices = {"no", "yes"}, style = "radioButtonHorizontal", persist=false)  adjust_brightness_contrast
 #@ String(label = "Convert to 8 bit?", choices = {"no", "yes"}, style = "radioButtonHorizontal", persist=false)  convert_to_8bit
 
