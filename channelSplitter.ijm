@@ -13,6 +13,9 @@
 #@ File (label = "Input directory", style = "directory") input
 #@ File (label = "Output directory", style = "directory") output
 #@ String (label = "File suffix", value = ".lsm", persist=false) suffix
+#@ String(label = "Adjust Brightness/Contrast?", choices = {"yes", "no"}, style = "radioButtonHorizontal", persist=false)  adjust_brightness_contrast
+#@ String(label = "Convert to 8 bit?", choices = {"yes", "no"}, style = "radioButtonHorizontal", persist=false)  convert_to_8bit
+
 
 
 setBatchMode(true);	// run routine without showing image windows, i.e. quicker
@@ -35,14 +38,27 @@ function processFolder(input) {
 function splitChannels(file){
 	open(input + File.separator + file);
 	numberOfChannels = nSlices();  // query number of slices in stack
+	if (numberOfChannels == nSlices){
 	run("Split Channels");
 	saveChannels(numberOfChannels);	// save channel for as many times as there were slices in the original stack
+	}
 	}
 
 // save files in specified output folder and close saved files
 function saveChannels(numberOfChannels){
 	for (i = 0; i < numberOfChannels; i++){
 		fileName = getTitle();
+		if (adjust_brightness_contrast == yes){
+			run("Z Project...", "projection=[Max Intensity]");
+			MIP_image = getTitle(); 
+			getMinAndMax(min, max);
+			selectWindow(MIP_image); 
+			Close();
+			setMinAndMax(min, max);				
+		}
+		if (convert_to_8bit == yes){
+   			run("8-bit");
+		}
 		saveAs("Tiff",output + File.separator + fileName);
 		close();
 	}
