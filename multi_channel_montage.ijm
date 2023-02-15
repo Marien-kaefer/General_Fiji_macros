@@ -14,9 +14,9 @@ Stack.getDimensions(width, height, channels, slices, frames)
 //print("width: " + width);
 
 // set default processing parameters
-Montage_slices = channels +1; 
-Montage_columns = floor(Montage_slices / 2 + 1);
-Montage_rows = Math.ceil(Montage_slices / Montage_columns);
+Montage_slices = channels + 1; 
+Montage_rows = floor(Montage_slices / 2 );
+Montage_columns = Math.ceil(Montage_slices / Montage_rows);
 resized_image_width = 300; 
 scale_bar_width = 10;
 scale_bar_height = 5;
@@ -83,7 +83,7 @@ selectWindow(scaled_title);
 if (scale_bar_option == "Yes"){
 	run("Scale Bar...", "width=scale_bar_width height=scale_bar_height font=scale_font_size color="+scale_bar_colour+" background=None location=["+scale_bar_position+"] bold label");
 }
-run("RGB Color");
+//run("RGB Color");
 run("Stack to Images");
 
 if (include_merge_choice == "Yes"){
@@ -105,13 +105,21 @@ if (include_merge_choice == "Yes"){
 	run("Flatten");
 }
 
+if (include_merge_choice == "No"){
+	Montage_rows = floor(channels / 2 );
+	Montage_columns = Math.ceil(channels / Montage_rows);
+	print("Montage columns: " + Montage_columns);
+	print("Montage rows: " + Montage_rows);
+
+}
+
 // gather single channel and composite merge image in single stack to generate montage
 run("Images to Stack", "name=Stack title=[] use");
 // make montage
 run("Make Montage...", "columns=Montage_columns rows=Montage_rows scale=1 border=3");
 // convert to 8-bit colour image to reduce file size
 if (final_image_type == "8-bit color"){
-	if (bitDepth() == "RGB"){
+	if (bitDepth() == "24"){
 		run("8-bit Color", "number=256");
 	}
 	else if (bitDepth() == "16-bit"){
