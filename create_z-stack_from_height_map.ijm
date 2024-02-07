@@ -22,9 +22,8 @@ pre_clean_up();
 #@ String(value="Please select the topographical file you wish to process.", visibility="MESSAGE") message
 #@ File (label = "File to process:", style = "open") inputFile
 #@ String(label = "Calibration unit: ", description = "nm", persist=true) calibration_unit
-#@ Double(label="Calibration in x: " , value = 1.1860940, persist=false) x_scaling
-#@ Double(label="Calibration in y: " , value = 1.1860940, persist=false) y_scaling
-#@ Double(label="Calibration in z: " , value = 0.5602854, persist=false) z_scaling
+#@ Double(label="Calibration in x: " , value = 1, persist=false) x_scaling
+#@ Double(label="Calibration in y: " , value = 1, persist=false) y_scaling
 #@ Integer(label="Number of z slices in resulting 3D stack: " , value = 114, persist=false) z_slices
 
 setBatchMode("hide");
@@ -71,7 +70,7 @@ function generate_z_stack_from_height_map(inputFile, x_scaling, y_scaling, z_sca
 	
 	selectWindow(z_stack_name); 
 	Stack.setXUnit(calibration_unit);
-	run("Properties...", "channels=1 slices=" + z_slices + " frames=1 pixel_width=" + x_scaling + " pixel_height=" + y_scaling + " voxel_depth=" + z_scaling + " frame=[0.00 sec]");
+	run("Properties...", "channels=1 slices=" + z_slices + " frames=1 pixel_width=" + x_scaling + " pixel_height=" + y_scaling + " voxel_depth=" + z_interval + " frame=[0.00 sec]");
 }
 
 function pre_clean_up(){
