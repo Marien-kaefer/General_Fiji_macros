@@ -51,3 +51,19 @@ Output:
   - The file names are suffixed with "_Z{sliceNumber}
 
 The macro requests the user to specify an output folder. 
+
+## Create z stack from height map/topography image
+* create_z-stack_from_height_map.ijm
+
+required: 
+* location of topography image - at the moment this assumes that the topography is an image file
+
+Output: 
+* one z stack
+  - The file names are suffixed with "_Z{sliceNumber}
+
+The macro requests the user to specify the following parameters: 
+* calibration unit
+* x, y & z scaling of the height map/topography image 
+* number of z slices in stack to be generated
+ 
