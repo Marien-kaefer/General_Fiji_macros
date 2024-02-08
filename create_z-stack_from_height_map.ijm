@@ -20,6 +20,7 @@ pre_clean_up();
 
 //get input parameters
 #@ String(value="Please select the topographical file you wish to process.", visibility="MESSAGE") message
+#@ String(choices={"ASCII","TIFF"}, style="radioButtonHorizontal") input_file_type
 #@ File (label = "File to process:", style = "open") inputFile
 #@ String(label = "Calibration unit: ", description = "nm", persist=true) calibration_unit
 #@ Double(label="Calibration in x: " , value = 1, persist=false) x_scaling
@@ -27,17 +28,22 @@ pre_clean_up();
 #@ Integer(label="Number of z slices in resulting 3D stack: " , value = 114, persist=false) z_slices
 
 setBatchMode("hide");
-generate_z_stack_from_height_map(inputFile, x_scaling, y_scaling, z_scaling, z_slices); 
+generate_z_stack_from_height_map(inputFile, x_scaling, y_scaling, z_slices); 
 print("Done!"); 
 setBatchMode("show");
 
-function generate_z_stack_from_height_map(inputFile, x_scaling, y_scaling, z_scaling, z_slices){
-	run("Bio-Formats Windowless Importer", "open=[" + inputFile + "]");
+function generate_z_stack_from_height_map(inputFile, x_scaling, y_scaling, z_slices){
+	if (input_file_type == "TIFF") {
+		run("Bio-Formats Windowless Importer", "open=[" + inputFile + "]");
+	}
+	else if (input_file_type == "ASCII") {
+		run("Text Image... ", "open=[" + inputFile + "]");
+	}
 	topo_title = getTitle(); 
 	topo_name = file_name_remove_extension(topo_title);
 	z_stack_name = topo_name + "_z-stack"; 
 	getDimensions(width, height, channels, slices, frames);
-	getRawStatistics(nPixels, mean, min, max, std, histogram)
+	getRawStatistics(nPixels, mean, min, max, std, histogram);
 	//print("min: " + min); 
 	//print("max: " + max); 
 	z_interval = (max - min) / z_slices; 
