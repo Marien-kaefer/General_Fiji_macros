@@ -1,7 +1,7 @@
 /*
 
 
-												- Written by Marie Held [mheldb@liverpool.ac.uk] February 2024
+												- Written by Marie Held [mheldb@liverpool.ac.uk] & Thomas Waring [twaring@liverpool.ac.uk] February 2024
 												  Liverpool CCI (https://cci.liverpool.ac.uk/)
 ________________________________________________________________________________________________________________________
 
@@ -19,53 +19,65 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 pre_clean_up();
 
 //get input parameters
-#@ String(value="Please select the topographical file you wish to process.", visibility="MESSAGE") message
+#@ String(value="Please select the files you wish to process.", visibility="MESSAGE") message
 #@ String(choices={"ASCII","TIFF"}, style="radioButtonHorizontal") input_file_type
-#@ File (label = "File to process:", style = "open") inputFile
-#@ String(label = "Calibration unit: ", description = "nm", persist=true) calibration_unit
-#@ Double(label="Calibration in x: " , value = 1, persist=false) x_scaling
-#@ Double(label="Calibration in y: " , value = 1, persist=false) y_scaling
-#@ Integer(label="Number of z slices in resulting 3D stack: " , value = 114, persist=false) z_slices
+#@ File (label = "Height map to process:", style = "open") height_inputFile
+#@ File (label = "Youngs modulus map to process:", style = "open") youngs_inputFile
+#@ String(label="Calibration unit", choices={"µm", "nm"}, style="list") calibration_unit
+//#@ String(label = "Calibration unit: ", description = "nm", persist=true) calibration_unit
+#@ Double(label="Calibration in x: " , value = 0.33, stepSize=0.001, persist=false) x_scaling
+#@ Double(label="Calibration in y: " , value = 0.33, stepSize=0.001 , persist=false) y_scaling
+#@ Integer(label="Number of z slices in resulting 3D stack: " , value = 13, persist=false) z_slices
 
 setBatchMode("hide");
-generate_z_stack_from_height_map(inputFile, x_scaling, y_scaling, z_slices); 
+z_stack_title = generate_z_stack_from_height_map(height_inputFile, x_scaling, y_scaling, z_slices, calibration_unit); 
+create_Youngs_modulus_stack(youngs_inputFile, z_slices, z_stack_title);
 print("Done!"); 
-setBatchMode("show");
 
-function generate_z_stack_from_height_map(inputFile, x_scaling, y_scaling, z_slices){
+
+setBatchMode("show");
+//print("x_scaling: " + x_scaling); 
+//print("y_scaling: " + y_scaling); 
+//print("Calibration unit: " + calibration_unit); 
+
+
+function generate_z_stack_from_height_map(height_inputFile, x_scaling, y_scaling, z_slices, calibration_unit){
 	if (input_file_type == "TIFF") {
-		run("Bio-Formats Windowless Importer", "open=[" + inputFile + "]");
+		run("Bio-Formats Windowless Importer", "open=[" + height_inputFile + "]");
 	}
 	else if (input_file_type == "ASCII") {
-		run("Text Image... ", "open=[" + inputFile + "]");
+		run("Text Image... ", "open=[" + height_inputFile + "]");
 	}
 	topo_title = getTitle(); 
 	topo_name = file_name_remove_extension(topo_title);
 	z_stack_name = topo_name + "_z-stack"; 
 	getDimensions(width, height, channels, slices, frames);
 	getRawStatistics(nPixels, mean, min, max, std, histogram);
-	//print("min: " + min); 
-	//print("max: " + max); 
+	print("min: " + min); 
+	print("max: " + max); 
+	print("range: " + (max-min));
 	z_interval = (max - min) / z_slices; 
-	//print("Interval: " + z_interval);
+	print("Interval: " + z_interval);
 	newImage(z_stack_name, "16-bit black", width, height, z_slices);
 	run("Paste Control...");
 	setPasteMode("OR");
 	
-	for (i = 1; i < z_slices+1; i++) {	
-		print(i + "/" + z_slices); 
+	for (i = 0; i < z_slices; i++) {	
+		print((i + 1) + "/" + z_slices); 
 		//print("height level: " + i * z_interval); 
 		selectWindow(topo_title); 
 		run("Duplicate...", " ");
 		temp_title = getTitle(); 
 		setAutoThreshold("Default dark");
 		//run("Threshold...");
-		setThreshold((i * z_interval), ((i+1) * z_interval));
+		//print("Threshold min: " + (min + (i * z_interval))); 
+		//print("Threshold max: " + (min + ((i+1) * z_interval))); 
+		setThreshold((min + (i * z_interval)), (min + (i+1) * z_interval));
 		setOption("BlackBackground", true);
 		run("Convert to Mask");
 		run("Copy");
 		selectWindow(z_stack_name); 
-		setSlice((z_slices - i + 1));
+		setSlice((z_slices - i));
 		run("Paste");
 		run("Enhance Contrast", "saturated=0.35");
 		run("Select None");
@@ -76,7 +88,39 @@ function generate_z_stack_from_height_map(inputFile, x_scaling, y_scaling, z_sli
 	
 	selectWindow(z_stack_name); 
 	Stack.setXUnit(calibration_unit);
+	if (calibration_unit == "µm") {
+		z_interval = z_interval * 1E6; 
+	}
+		if (calibration_unit == "nm") {
+		z_interval = z_interval * 1E9; 
+	}
+	//print("Converted Z interval): " + z_interval); 
+
 	run("Properties...", "channels=1 slices=" + z_slices + " frames=1 pixel_width=" + x_scaling + " pixel_height=" + y_scaling + " voxel_depth=" + z_interval + " frame=[0.00 sec]");
+	z_stack_title = getTitle();
+	selectWindow(topo_title);
+	close();
+	return 	z_stack_title;
+}
+
+function create_Youngs_modulus_stack(youngs_inputFile, z_slices, z_stack_title){
+	selectWindow(z_stack_title);
+	run("Duplicate...", "duplicate");
+	z_stack_title_dupl = getTitle();
+	run("Divide...", "value=255.0000000 stack");
+	for (i = 0; i < z_slices; i++) {	
+		if (input_file_type == "TIFF") {
+			run("Bio-Formats Windowless Importer", "open=[" + youngs_inputFile + "]");
+		}
+		else if (input_file_type == "ASCII") {
+			run("Text Image... ", "open=[" + youngs_inputFile + "]");
+		}
+	}
+	run("Images to Stack", "use");
+	parameter_image_title = getTitle();
+	
+	imageCalculator("Multiply create 32-bit stack", parameter_image_title , z_stack_title_dupl);
+
 }
 
 function pre_clean_up(){
