@@ -43,7 +43,7 @@ output_root_path = substring(output, 0, output_root_path_length);
 run("Set Measurements...", "area mean standard modal min centroid perimeter bounding fit shape feret's integrated median skewness kurtosis display decimal=3");
 
 // Start processing from the top-level directory
-processDirectory(input, output, input_root_path_length, 1);
+processDirectory(input, output, input_root_path_length, input_suffix, 1);
 
 // Let the user know the process has finished and how long it took
 stop = getTime(); 
@@ -53,7 +53,7 @@ print(TimeStamp() + ": Processing complete. The analysis took " + duration_Strin
 beep();
 
 // Recursive function to process all files in directories
-function processDirectory(input, output, input_root_path_length, level) {
+function processDirectory(input, output, input_root_path_length, input_suffix, level) {
     list = getFileList(input);
     for (i = 0; i < list.length; i++) {
         path = input + File.separator + list[i];
@@ -61,8 +61,9 @@ function processDirectory(input, output, input_root_path_length, level) {
             // Create corresponding output directory
             File.makeDirectory(output + File.separator + list[i]);
             // Recursively process the subdirectory
-            processDirectory(path + "/", output + File.separator + list[i] + "/", input_root_path_length, level + 1);
-        } else {
+            processDirectory(path + "/", output + File.separator + list[i] + "/", input_root_path_length, input_suffix, level + 1);
+        } 
+        if(endsWith(list[i], input_suffix)){
             // Process image file
             outputPath = output + File.separator + list[i];
             file_processing(input, list, classifier_file, output, output_root_path, output_suffix, minimum_cell_size, maximum_cell_size);
