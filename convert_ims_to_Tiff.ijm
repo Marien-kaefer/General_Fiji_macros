@@ -11,7 +11,7 @@
 
 //get file name and directory from file, uncomment the print statements for troubleshooting 
 //print(input)
-start = getTime(); 
+//start = getTime(); 
 slashIndex = lastIndexOf(input, File.separator ); 
 file_name = substring(input, slashIndex + 1, lengthOf(input) -1 );
 directory = substring(input, 0, slashIndex );
@@ -22,7 +22,10 @@ print(TimeStamp() + ": Opening file " + file_name_without_extension + " located 
 
 //open file, adjust brightness and contrast and save as .tif
 //print(input); 
-open(input);
+//open(input);
+start = getTime(); 
+run("Bio-Formats Importer", "open=[" + input + "] use_virtual_stack");
+stop = getTime(); 
 run("Enhance Contrast", "saturated=0.35");
 print(TimeStamp() + ": Saving file " + file_name_without_extension + ".tif in " + directory ); 
 saveAs("Tiff", directory + File.separator + file_name_without_extension + ".tif");
@@ -32,7 +35,7 @@ close();
 stop = getTime(); 
 duration = stop - start;
 duration_String = duration_conversion(duration);
-print("The file conversion took " + duration_conversion(duration));
+print("The file opening took " + duration_conversion(duration));
 print(TimeStamp() + ": Done!");
 
 
