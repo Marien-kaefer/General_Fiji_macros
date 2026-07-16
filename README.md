@@ -62,6 +62,7 @@ Input:
 * saved instance mask, e.g. created through Cellpose
 * single channel image expected
 * image can be z-stack or time series but not a combination of the two
+* touching objects will be split
 
 Output:
 * Stack containing binary masks per slice/frame
