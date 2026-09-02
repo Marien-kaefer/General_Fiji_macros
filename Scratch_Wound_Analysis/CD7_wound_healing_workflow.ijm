@@ -27,7 +27,8 @@ run("Fresh Start");
 #@ Integer(label="Median Filter radius (px): ", value = 2, persist = true) median_filter_radius
 #@ Integer(label="Top Hat Filter radius (px): ", value = 30, persist = true) top_hat_filter_radius
 #@ Integer(label="Variance Filter radius (px): ", value = 35, persist = true) variance_filter_radius
-#@ Double(label="Wound minimum size (micron): ", value = 100000) wound_size_minimum
+#@ Double(label="Wound minimum size (micron): ", value = 10000) wound_size_minimum
+#@ Integer(label = "Wound centroid allowed deviation from image centre (%): ", value = 50) wound_centroid_position_deviation_percent
 
 
 run("Set Measurements...", "area mean standard modal min centroid center perimeter bounding fit shape feret's integrated median skewness kurtosis area_fraction stack display redirect=None decimal=3");
@@ -54,10 +55,10 @@ function process_images(raw_ID, output_directory){
 	getPixelSize(unit, pixelWidth, pixelHeight);
 	mid_x = width/2 * pixelWidth ; 
 	mid_y = height/2 * pixelHeight; 
-	min_x = round(mid_x * 0.75);
-	max_x = round(mid_x * 1.25);
-	min_y = round(mid_y * 0.75);
-	max_y = round(mid_y * 1.25);
+	min_x = round(mid_x * wound_centroid_position_deviation_percent/100);
+	max_x = round(mid_x * (1 + wound_centroid_position_deviation_percent/100));
+	min_y = round(mid_y * wound_centroid_position_deviation_percent/100);
+	max_y = round(mid_y * (1 + wound_centroid_position_deviation_percent/100));
 	//print("Centroid cutoff: " + min_x + "-" + max_x + "; " + min_y + "-" + max_y); 
 	
 	
@@ -69,7 +70,7 @@ function process_images(raw_ID, output_directory){
 	run("Top Hat...", "radius=" + top_hat_filter_radius + " stack");
 	run("Variance...", "radius=" + variance_filter_radius + " stack");
 	run("Convert to Mask", "method=MaxEntropy background=Dark calculate black create");
-	run("Fill Holes", "stack");
+	//run("Fill Holes", "stack");
 	run("Invert", "stack");
 	run("Analyze Particles...", "size=" + wound_size_minimum + "-Infinity show=Masks add stack");
 	roiManager("save", output_directory + File.separator + raw_title + "_Scene_" + IJ.pad(scene_index, 4) + "_ROIs-unfiltered.zip");
@@ -90,16 +91,14 @@ function process_images(raw_ID, output_directory){
 		if (centroid_x < min_x || centroid_x > max_x || centroid_y < min_y || centroid_y > max_y){ 
 			roi_index[n] = roiManager("index");
 			//Array.show(roi_index); 
-			print("ROI centroid outside of central 25% of the image - not measured."); 
+			roiManager("select", roi_index);
+			roiManager("Delete");
+			print("ROI centroid outside of the specifed central area of the image - deleted."); 
 			n += 1; 
 		}
 	}
-	//Array.show(roi_index); 
-	roiManager("select", roi_index);
-	roiManager("Delete");
 	print("ROI count after filtering: " + roiManager("count")); 
-	run("Clear Results");
-	
+	run("Clear Results");	
 	
 	setLineWidth(6);
 	setForegroundColor(0, 0, 0);
@@ -115,10 +114,13 @@ function process_images(raw_ID, output_directory){
 			run("Hide Overlay");
 		}
 		roiManager("save", output_directory + File.separator + raw_title + "_Scene_" + IJ.pad(scene_index, 4) + "_ROIs-filtered.zip");
-		saveAs("TIFF", output_directory + File.separator + raw_title + "_Scene_" + IJ.pad(scene_index, 4) + "_wound_boundary_overlay.tif");
 		roiManager("deselect");
 		saveAs("Results", output_directory + File.separator + raw_title + "_Scene_" + IJ.pad(scene_index, 4) + "_wound_measurements.csv");
 	}
+	selectImage(duplicate_ID);
+	saveAs("TIFF", output_directory + File.separator + raw_title + "_Scene_" + IJ.pad(scene_index, 4) + "_wound_boundary_overlay.tif");
+	selectWindow("Log"); 
+	saveAs("Text", output_directory + File.separator + raw_title + "_Scene_" + IJ.pad(scene_index, 4) + "_LOG.txt");
 	run("Clear Results");
 }
 
