@@ -53,7 +53,7 @@ run("Line Width...", "line=1");
 waitForUser("All done. Your job is quality control.");
 
 
-function write_processing_parameters_to_file(input_file, output_directory, start_scene_index, end_scene_index, scene_increment, contrast_enhancement_choice, median_filter_radius, top_hat_filter_radius, variance_filter_radius, threshold_algorithm, wound_size_minimum, wound_centroid_position_deviation_percent){
+function write_processing_parameters_to_file(input_file, output_directory, start_scene_index, end_scene_index, scene_increment, contrast_enhancement_choice, fill_holes_choice, median_filter_radius, top_hat_filter_radius, variance_filter_radius, threshold_algorithm, wound_size_minimum, wound_centroid_position_deviation_percent){
 	parameters_output_file = File.open(output_directory + File.separator + "analysis_parameters.txt"); 
 	print(parameters_output_file, "Folder - input: " + input_file);
 	print(parameters_output_file, "Folder - output: " + output_directory);
