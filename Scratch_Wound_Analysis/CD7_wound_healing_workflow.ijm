@@ -25,6 +25,7 @@ run("Fresh Start");
 #@ Integer(label="Last Scene to analyse: ", value = 24, persist = true) end_scene_index
 #@ Integer(label="Scene increment for processing:", value = 1, persist = true) scene_increment
 #@ Boolean(label="Run local contrast enhancement (CLAHE)? ") contrast_enhancement_choice
+#@ Boolean(label="Run Fill Holes on binary mask? ") fill_holes_choice
 #@ Integer(label="Median Filter radius (px): ", value = 2, persist = true) median_filter_radius
 #@ Integer(label="Top Hat Filter radius (px): ", value = 30, persist = true) top_hat_filter_radius
 #@ Integer(label="Variance Filter radius (px): ", value = 35, persist = true) variance_filter_radius
@@ -43,7 +44,7 @@ for (scene_index = start_scene_index; scene_index <= end_scene_index; scene_inde
 	raw_title = File.nameWithoutExtension; 
 	print("Processing " + raw_title + " Scene " + scene_index); 
 	
-	write_processing_parameters_to_file(input_file, output_directory, start_scene_index, end_scene_index, scene_increment, contrast_enhancement_choice, median_filter_radius, top_hat_filter_radius, variance_filter_radius, threshold_algorithm, wound_size_minimum, wound_centroid_position_deviation_percent);	
+	write_processing_parameters_to_file(input_file, output_directory, start_scene_index, end_scene_index, scene_increment, contrast_enhancement_choice, fill_holes_choice, median_filter_radius, top_hat_filter_radius, variance_filter_radius, threshold_algorithm, wound_size_minimum, wound_centroid_position_deviation_percent);	
 	process_images(raw_ID, output_directory); 
 	clean_up(); 
 }
@@ -60,6 +61,7 @@ function write_processing_parameters_to_file(input_file, output_directory, start
     print(parameters_output_file, "Last Scene to analyse: " + end_scene_index);
     print(parameters_output_file, "Scene increment for processing: " + scene_increment);
     print(parameters_output_file, "Contrast enhancement choice: " + contrast_enhancement_choice); 
+    print(parameters_output_file, "Run Fill Holes on binary mask choice: " + fill_holes_choice); 
     print(parameters_output_file, "Median Filter radius (px): " + median_filter_radius); 
     print(parameters_output_file, "Top Hat Filter radius (px): " + top_hat_filter_radius); 
     print(parameters_output_file, "Variance Filter radius (px): " + variance_filter_radius);  
@@ -131,66 +133,80 @@ function process_images(raw_ID, output_directory){
 	run("Top Hat...", "radius=" + top_hat_filter_radius + " stack");
 	run("Variance...", "radius=" + variance_filter_radius + " stack");
 	run("Convert to Mask", "method=" + threshold_algorithm + " background=Dark calculate black create");
-	run("Fill Holes", "stack");
-	run("Invert", "stack");
-	run("Analyze Particles...", "size=" + wound_size_minimum + "-Infinity show=Masks add stack");
-	for (i = 0; i < roiManager("count"); i++){
-		roiManager("select", i);
-		roiManager("rename", "ROI_" + IJ.pad(i,3));
-	};
-	roiManager("save", output_directory + File.separator + raw_title + "_Scene_" + IJ.pad(scene_index, 4) + "_ROIs-unfiltered.zip");
 	
-	// filter ROIs
-	roi_index = newArray();
-	print("ROI count before filtering: " + roiManager("count"));
-	n = 0; 
-	delete_array = newArray(); 
-	for (i = 0; i < roiManager("count"); i++) {
-		roiManager("select", i);
-		roiManager("rename", "ROI_" + IJ.pad(i,3));
-		//print("Investigating ROI " + i); 
-		run("Measure");
-		centroid_x = getResult("X", i);
-		centroid_y = getResult("Y", i);
-		//print("Centroid X: " + centroid_x); 
-		//print("Centroid Y: " + centroid_y); 
-		if (centroid_x < min_x || centroid_x > max_x || centroid_y < min_y || centroid_y > max_y){ 
-			roi_index[n] = roiManager("index");
-			print("ROI Manager index: " + roi_index[i] + "; n = " + n); 
-			Array.show(roi_index); 
-			roiManager("select", roi_index);
-			delete_array[n] = i; 			
-			//roiManager("Delete");
-			n += 1; 
-		}		
-	}
-	//Array.show("Delete index list", delete_array); 
-	if(delete_array.length > 0){
-		roiManager("select", delete_array);
-		Array.show(delete_aray); 
-		roiManager("delete");
-	};
-	print("ROI count after filtering: " + roiManager("count")); 
-	run("Clear Results");		
-	setLineWidth(6);
-	setForegroundColor(0, 0, 0);
-	setBackgroundColor(255, 255, 255);
-	if(roiManager("count") > 0){
-		for (i = 0; i < roiManager("count"); i++) {
-			selectImage(raw_ID);
+	if (is("binary")) {
+    getStatistics(area, mean, min, max);
+    if (max == 255) {
+        print("Valid, non-empty binary mask.");
+        if (fill_holes_choice == true){
+        	run("Fill Holes", "stack");
+        }
+		run("Invert", "stack");
+		run("Analyze Particles...", "size=" + wound_size_minimum + "-Infinity show=Masks add stack");
+		for (i = 0; i < roiManager("count"); i++){
 			roiManager("select", i);
-			roiManager("measure");
-			run("Draw", "slice");
-			roiManager("deselect");
-			run("Select None");
-			run("Hide Overlay");
+			roiManager("rename", "ROI_" + IJ.pad(i,3));
+		};
+		roiManager("save", output_directory + File.separator + raw_title + "_Scene_" + IJ.pad(scene_index, 4) + "_ROIs-unfiltered.zip");
+		
+		// filter ROIs
+		roi_index = newArray();
+		print("ROI count before filtering: " + roiManager("count"));
+		n = 0; 
+		delete_array = newArray(); 
+		for (i = 0; i < roiManager("count"); i++) {
+			roiManager("select", i);
+			roiManager("rename", "ROI_" + IJ.pad(i,3));
+			//print("Investigating ROI " + i); 
+			run("Measure");
+			centroid_x = getResult("X", i);
+			centroid_y = getResult("Y", i);
+			//print("Centroid X: " + centroid_x); 
+			//print("Centroid Y: " + centroid_y); 
+			if (centroid_x < min_x || centroid_x > max_x || centroid_y < min_y || centroid_y > max_y){ 
+				roi_index[n] = roiManager("index");
+				print("ROI Manager index: " + roi_index[i] + "; n = " + n); 
+				Array.show(roi_index); 
+				roiManager("select", roi_index);
+				delete_array[n] = i; 			
+				//roiManager("Delete");
+				n += 1; 
+			}		
 		}
-		roiManager("save", output_directory + File.separator + raw_title + "_Scene_" + IJ.pad(scene_index, 4) + "_ROIs-filtered.zip");
-		roiManager("deselect");
-		saveAs("Results", output_directory + File.separator + raw_title + "_Scene_" + IJ.pad(scene_index, 4) + "_wound_measurements.csv");
+		//Array.show("Delete index list", delete_array); 
+		if(delete_array.length > 0){
+			roiManager("select", delete_array);
+			Array.show(delete_aray); 
+			roiManager("delete");
+		};
+		print("ROI count after filtering: " + roiManager("count")); 
+		run("Clear Results");		
+		setLineWidth(6);
+		setForegroundColor(0, 0, 0);
+		setBackgroundColor(255, 255, 255);
+		if(roiManager("count") > 0){
+			for (i = 0; i < roiManager("count"); i++) {
+				selectImage(raw_ID);
+				roiManager("select", i);
+				roiManager("measure");
+				run("Draw", "slice");
+				roiManager("deselect");
+				run("Select None");
+				run("Hide Overlay");
+			}
+			roiManager("save", output_directory + File.separator + raw_title + "_Scene_" + IJ.pad(scene_index, 4) + "_ROIs-filtered.zip");
+			roiManager("deselect");
+			saveAs("Results", output_directory + File.separator + raw_title + "_Scene_" + IJ.pad(scene_index, 4) + "_wound_measurements.csv");
+		}
+		selectImage(raw_ID);
+		saveAs("TIFF", output_directory + File.separator + raw_title + "_Scene_" + IJ.pad(scene_index, 4) + "_wound_boundary_overlay.tif");
+    } else {
+        print("Binary mask is empty. Skip to next scene.");
+    }
+	} else {
+	    print("Image is not binary. Skip to next scene.");
 	}
-	selectImage(raw_ID);
-	saveAs("TIFF", output_directory + File.separator + raw_title + "_Scene_" + IJ.pad(scene_index, 4) + "_wound_boundary_overlay.tif");
+	
 	selectWindow("Log"); 
 	saveAs("Text", output_directory + File.separator + raw_title + "_Scene_" + IJ.pad(scene_index, 4) + "_LOG.txt");
 	run("Clear Results");
