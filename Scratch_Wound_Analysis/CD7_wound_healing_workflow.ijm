@@ -165,7 +165,7 @@ function process_images(raw_ID, output_directory){
 			//print("Centroid Y: " + centroid_y); 
 			if (centroid_x < min_x || centroid_x > max_x || centroid_y < min_y || centroid_y > max_y){ 
 				roi_index[n] = roiManager("index");
-				print("ROI Manager index: " + roi_index[i] + "; n = " + n); 
+				//print("ROI Manager index: " + roi_index[n] + "; n = " + n); 
 				Array.show(roi_index); 
 				roiManager("select", roi_index);
 				delete_array[n] = i; 			
@@ -176,7 +176,7 @@ function process_images(raw_ID, output_directory){
 		//Array.show("Delete index list", delete_array); 
 		if(delete_array.length > 0){
 			roiManager("select", delete_array);
-			Array.show(delete_aray); 
+			Array.show(delete_array); 
 			roiManager("delete");
 		};
 		print("ROI count after filtering: " + roiManager("count")); 
